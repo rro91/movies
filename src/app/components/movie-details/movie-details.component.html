@@ -1,0 +1,8 @@
+<div class="card movie">
+  <div class="card-body text-center">
+    <img class="movie__poster" [src]="movie.poster_path" alt="">
+    <h5 class="movie__title">{{movie.title}}</h5>
+    <p class="movie__title--original text-monospace">{{movie.original_title}}</p>
+    <p class="movie__release mt-auto">({{movie.release_date | date : 'YYYY'}})</p>
+  </div>
+</div>

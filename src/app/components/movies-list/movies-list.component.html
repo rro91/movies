@@ -1,0 +1,16 @@
+<div class="container">
+  <div class="row">
+    <ng-container *ngIf="movies$ | async as movies">
+      <ng-container *ngIf="movies.length; else noMovies">
+        <div class="col-md-3 mb-2" *ngFor="let movie of movies">
+          <app-movie-details [movie]="movie"></app-movie-details>
+        </div>
+      </ng-container>
+      <ng-template #noMovies>No movies...</ng-template>
+      <div class="col-12 d-flex justify-content-center">
+          <ngb-pagination [(page)]="page" [collectionSize]="totalMovies" [maxSize]="5" (pageChange)="onPageChange()"></ngb-pagination>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
