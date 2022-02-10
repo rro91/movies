@@ -3,7 +3,8 @@ export interface Movie {
   poster_path: string,
   original_title: string,
   title: string,
-  release_date: string
+  release_date: string,
+  overview: string
 }
 
 export interface MovieSearchResult {

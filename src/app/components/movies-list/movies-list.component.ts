@@ -1,7 +1,7 @@
-import {Component, OnInit} from '@angular/core';
+import {Component,OnInit} from '@angular/core';
 import {MoviesService} from "../../services/movies.service";
-import {map, Observable, of, pluck, switchMap, tap} from "rxjs";
-import {Movie, MovieConfig, MovieSearchResult} from "../../interfaces/movie.interface";
+import {Observable,pluck, switchMap, tap} from "rxjs";
+import {Movie} from "../../interfaces/movie.interface";
 
 @Component({
   selector: 'app-movies-list',
@@ -10,47 +10,31 @@ import {Movie, MovieConfig, MovieSearchResult} from "../../interfaces/movie.inte
 })
 export class MoviesListComponent implements OnInit {
   movies$: Observable<Movie[]>;
-  page = 1;
+  page: number;
+  pageSize = 20;
   totalMovies: number;
 
-  constructor(private moviesService: MoviesService) {}
+  constructor(private moviesService: MoviesService) {
+  }
 
   ngOnInit(): void {
-    this.getData();
+    this.getMovies();
   }
 
   onPageChange() {
-    this.getData();
+    this.moviesService.setPage(this.page)
+    this.getMovies();
   }
 
-  private getData() {
-    this.movies$ = this.getConfig().pipe(
-      switchMap(config => this.getMovies()
-        .pipe(
-          tap(data => {
-            this.totalMovies = data.total_results;
-          }),
-          pluck('results'),
-          map(movies => movies.map(movie => ({
-            ...movie,
-            poster_path: `${config.images.base_url}${config.images.poster_sizes[0]}${movie.poster_path}`
-          })))
-        ))
-    )
-  }
-
-  private getConfig(): Observable<MovieConfig> {
-    const localConfig = localStorage.getItem('MoviesConfig')
-    if (localConfig) {
-      return of(JSON.parse(localConfig))
-    }
-    return this.moviesService.getConfig()
-      .pipe(
-        tap(config => localStorage.setItem('MoviesConfig', JSON.stringify(config)))
+  private getMovies() {
+    this.movies$ =
+      this.moviesService.getPage().pipe(
+        tap(page => this.page = page),
+        switchMap(page => this.moviesService.getMovies(page)),
+        tap(data => {
+          this.totalMovies = Math.min(this.pageSize * 500, data.total_results); // max 500 pages limitation
+        }),
+        pluck('results')
       )
-  }
-
-  private getMovies(): Observable<MovieSearchResult> {
-    return this.moviesService.getMovies(this.page)
   }
 }

@@ -2,13 +2,15 @@
   <div class="row">
     <ng-container *ngIf="movies$ | async as movies">
       <ng-container *ngIf="movies.length; else noMovies">
-        <div class="col-md-3 mb-2" *ngFor="let movie of movies">
-          <app-movie-details [movie]="movie"></app-movie-details>
+        <div class="col-md-3 text-center movie" *ngFor="let movie of movies">
+          <img class="movie__poster" [src]="movie.poster_path" alt="">
+          <h3 class="movie__title">{{movie.title}}</h3>
+          <a class="movie__link" [routerLink]="['movies/' + movie.id]" style="cursor: pointer">More</a>
         </div>
       </ng-container>
       <ng-template #noMovies>No movies...</ng-template>
       <div class="col-12 d-flex justify-content-center">
-          <ngb-pagination [(page)]="page" [collectionSize]="totalMovies" [maxSize]="5" (pageChange)="onPageChange()"></ngb-pagination>
+          <ngb-pagination [(page)]="page" [collectionSize]="totalMovies" [maxSize]="5" [pageSize]="pageSize" (pageChange)="onPageChange()"></ngb-pagination>
       </div>
     </ng-container>
   </div>

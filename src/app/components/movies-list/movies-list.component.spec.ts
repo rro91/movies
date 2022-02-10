@@ -1,16 +1,21 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ComponentFixture, fakeAsync, inject, TestBed, tick} from '@angular/core/testing';
 import {MoviesListComponent} from './movies-list.component';
 import {MoviesService} from "../../services/movies.service";
 import {MoviesServiceMock} from "../../mocks/movies.service.mock";
+import {moviesMock} from "../../mocks/movies.mock";
+import {RouterTestingModule} from "@angular/router/testing";
+import {MovieDetailsComponent} from "../movie-details/movie-details.component";
+import {Location} from "@angular/common";
 
 describe('MoviesListComponent', () => {
   let component: MoviesListComponent;
   let fixture: ComponentFixture<MoviesListComponent>;
-  let localStore: { [key: string]: string }
+  let compiled: HTMLElement;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [MoviesListComponent],
+      imports: [RouterTestingModule.withRoutes([{path: 'movies', children: [{path: ':id', component: MovieDetailsComponent}]}])],
       providers: [
         {
           provide: MoviesService,
@@ -24,53 +29,64 @@ describe('MoviesListComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(MoviesListComponent);
     component = fixture.componentInstance;
-    localStore = {};
-    spyOn(window.localStorage, 'getItem').and.callFake((key) =>
-      key in localStore ? localStore[key] : null
-    );
-    spyOn(window.localStorage, 'setItem').and.callFake(
-      (key, value) => (localStore[key] = value + '')
-    );
+    compiled = fixture.nativeElement
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+  describe('Movies logic', () => {
+    it('should get movies on init', () => {
+      component.ngOnInit();
+      component.movies$.subscribe(movies => {
+        expect(movies).toEqual(moviesMock.map(movie => ({...movie, poster_path: 'http://text-url/large/test-path'})))
+      })
+    });
 
-  it('should get data on init', () => {
-    component['getData'] = jasmine.createSpy();
-    component.ngOnInit();
-    expect(component['getData']).toHaveBeenCalled()
-  });
+    it('should set totalMovies', () => {
+      component.ngOnInit();
+      expect(component.totalMovies).toEqual(2)
+    });
 
-  it('should set totalMovies', () => {
-    component.ngOnInit();
-    expect(component.totalMovies).toEqual(2)
-  });
+    it('should emit current page on page change', () => {
+      component.page = 2;
+      component['moviesService'].setPage = jasmine.createSpy();
+      component.onPageChange();
+      expect(component['moviesService'].setPage).toHaveBeenCalledWith(2)
+    });
 
-  it('should map movie poster path', () => {
-    component.ngOnInit();
-    component.movies$.subscribe(movies => {
-      expect(movies[0].poster_path).toEqual('http://text-url/small/test-path')
-    })
-  });
-
-  it('should get config from storage if exists', () => {
-    localStore = {'MoviesConfig': '{"images":{"base_url":"http://fromStorage/","poster_sizes":["small","large"]}}'}
-    component.ngOnInit();
-    component.movies$.subscribe(movies => {
-      expect(movies[0].poster_path).toEqual('http://fromStorage/small/test-path')
+    it('should get movies on page change', () => {
+      component['getMovies'] = jasmine.createSpy();
+      component.onPageChange();
+      expect(component['getMovies']).toHaveBeenCalled()
     })
   })
 
-  it('should set config in storage', function () {
-    component.ngOnInit();
-    expect(localStore['MoviesConfig']).toEqual(JSON.stringify({
-      images: {
-        poster_sizes: ['small', 'large'],
-        base_url: 'http://text-url/'
-      }
-    }))
-  });
+  describe('Rendering', () => {
+    it('should render movies', () => {
+      expect(compiled.querySelectorAll('h3')?.length).toEqual(2);
+    });
+
+    it('should render movie\'s title', () => {
+      expect(compiled.querySelector('h3')?.textContent).toEqual('Star Wars');
+    });
+
+    it('should render movie\'s poster', () => {
+      expect(compiled.querySelector('.movie__poster')?.getAttribute('src')).toContain('test-path');
+    })
+
+    it('should render more link', () => {
+      expect(compiled.querySelector('a.movie__link')?.textContent).toEqual('More');
+    });
+  })
+
+  describe('Interactions', () => {
+    it('should redirect user to the movie details page', fakeAsync(inject([Location], (location: Location) => {
+      const link = compiled.querySelector('a.movie__link') as HTMLAnchorElement;
+      link?.click();
+      tick();
+      fixture.whenStable().then(() => {
+        const url = location.path()
+        expect(url).toEqual('/movies/1')
+      })
+    })));
+  })
 });

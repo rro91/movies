@@ -18,16 +18,12 @@ describe('HeaderComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-
   it(`should have as title 'movies'`, () => {
-    expect(component.title).toEqual('Movies');
+    expect(component.title).toEqual('Movies App');
   });
 
   it('should render title', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Movies');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Movies App');
   });
 });

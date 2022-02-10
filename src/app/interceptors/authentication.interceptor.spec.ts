@@ -16,10 +16,6 @@ describe('AuthenticationInterceptor', () => {
     interceptor = TestBed.inject(AuthenticationInterceptor);
   })
 
-  it('should be created', () => {
-    expect(interceptor).toBeTruthy();
-  });
-
   it('should add apiKey to request params', function () {
     const request = new HttpRequest('GET', 'test');
     const next =  {
